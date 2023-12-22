@@ -1,7 +1,8 @@
 # Copyright © 2023 Apple Inc.
 
-from mlx import extension
 from setuptools import setup
+
+from mlx import extension
 
 if __name__ == "__main__":
     setup(
@@ -14,5 +15,5 @@ if __name__ == "__main__":
         package_dir={"": "."},
         package_data={"mlx_sample_extensions": ["*.so", "*.dylib", "*.metallib"]},
         zip_safe=False,
-        python_requires=">=3.7",
+        python_requires=">=3.8",
     )

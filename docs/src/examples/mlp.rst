@@ -61,7 +61,10 @@ set:
   def eval_fn(model, X, y):
       return mx.mean(mx.argmax(model(X), axis=1) == y)
 
-Next, setup the problem parameters and load the data:
+Next, setup the problem parameters and load the data. To load the data, you need our
+`mnist data loader
+<https://github.com/ml-explore/mlx-examples/blob/main/mnist/mnist.py>`_, which
+we will import as `mnist`.
 
 .. code-block:: python
 
@@ -127,5 +130,5 @@ Finally, we put it all together by instantiating the model, the
   This should not be confused with :func:`mlx.core.value_and_grad`.
 
 The model should train to a decent accuracy (about 95%) after just a few passes
-over the training set. The `full example <https://github.com/ml-explore/mlx-examples/tree/main/mlp>`_
+over the training set. The `full example <https://github.com/ml-explore/mlx-examples/tree/main/mnist>`_
 is available in the MLX GitHub repo.

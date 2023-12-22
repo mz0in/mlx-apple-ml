@@ -1,8 +1,8 @@
 # Copyright © 2023 Apple Inc.
 
 import argparse
-import mlx.core as mx
 
+import mlx.core as mx
 from time_utils import time_fn
 
 B = 8
@@ -30,7 +30,7 @@ def time_batch_matmul():
     time_fn(batch_vjp_second)
 
 
-def time_unbatch_matmul(key):
+def time_unbatch_matmul():
     mx.random.seed(3)
     a = mx.random.uniform(shape=(B * T, D))
     b = mx.random.uniform(shape=(D, D))

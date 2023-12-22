@@ -18,7 +18,28 @@ option(MLX_BUILD_METAL "Build metal backend" ON)
 option(BUILD_SHARED_LIBS "Build mlx as a shared library" OFF)
 
 if(NOT MLX_VERSION)
-  set(MLX_VERSION 0.0.1)
+  set(MLX_VERSION 0.0.6)
+endif()
+
+# --------------------- Processor tests -------------------------
+
+message(STATUS "Building MLX for ${CMAKE_HOST_SYSTEM_PROCESSOR} processor on ${CMAKE_SYSTEM_NAME}")
+
+set(MLX_BUILD_ARM OFF)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+  if (${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    message(WARNING 
+      "Building for x86_64 on macOS is not supported." 
+      " If you are on an Apple silicon system, "
+      " make sure you are building for arm64.")
+  elseif(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
+    set(MLX_BUILD_ARM ON)
+  endif()
+
+else()
+  message(WARNING "MLX is prioritised for Apple silicon systems using macOS.")
 endif()
 
 # ----------------------------- Lib -----------------------------
@@ -37,20 +58,26 @@ endif()
 
 if (MLX_BUILD_METAL AND NOT METAL_LIB)
   message(STATUS "Metal not found. Unable to build GPU")
+  set(MLX_BUILD_METAL OFF)
 elseif (MLX_BUILD_METAL)
   message(STATUS "Building METAL sources")
   add_compile_definitions(_METAL_)
 
-  execute_process(COMMAND zsh "-c" "/usr/bin/sw_vers | cut -f2- -d: | sed -n 2p | grep -Eo '[0-9]+.[0-9]+'"
-                  OUTPUT_VARIABLE MACOS_VERSION)
+  # Throw an error if xcrun not found
+  execute_process(COMMAND zsh "-c" "/usr/bin/xcrun -sdk macosx --show-sdk-version"
+                  OUTPUT_VARIABLE MACOS_VERSION
+                  COMMAND_ERROR_IS_FATAL ANY)
 
-  message(STATUS "Detected macOS version ${MACOS_VERSION}")
-  if (${MACOS_VERSION} GREATER_EQUAL 14.0)
+  message(STATUS "Building with SDK for macOS version ${MACOS_VERSION}")
+  
+  if (${MACOS_VERSION} GREATER_EQUAL 14.2)
+    set(METAL_CPP_URL https://developer.apple.com/metal/cpp/files/metal-cpp_macOS14.2_iOS17.2.zip)
+  elseif (${MACOS_VERSION} GREATER_EQUAL 14.0)
     set(METAL_CPP_URL https://developer.apple.com/metal/cpp/files/metal-cpp_macOS14_iOS17-beta.zip)
   elseif (${MACOS_VERSION} GREATER_EQUAL 13.3)
     set(METAL_CPP_URL https://developer.apple.com/metal/cpp/files/metal-cpp_macOS13.3_iOS16.4.zip)
   else()
-    set(METAL_CPP_URL https://developer.apple.com/metal/cpp/files/metal-cpp_macOS13_iOS16.zip)
+    message(FATAL_ERROR "MLX requires macOS >= 13.4 to be built with MLX_BUILD_METAL=ON" )
   endif()
 
   FetchContent_Declare(
@@ -72,13 +99,13 @@ elseif (MLX_BUILD_METAL)
 endif()
 
 find_library(ACCELERATE_LIBRARY Accelerate)
-if (ACCELERATE_LIBRARY)
+if (MLX_BUILD_ARM AND ACCELERATE_LIBRARY)
   message(STATUS "Accelerate found ${ACCELERATE_LIBRARY}")
   set(MLX_BUILD_ACCELERATE ON)
   target_link_libraries(mlx ${ACCELERATE_LIBRARY})
   add_compile_definitions(ACCELERATE_NEW_LAPACK)
 else()
-  message(STATUS "Accelerate not found, using default backend.")
+  message(STATUS "Accelerate or arm neon not found, using default backend.")
   set(MLX_BUILD_ACCELERATE OFF)
   #set(BLA_VENDOR Generic)
   find_package(BLAS REQUIRED)

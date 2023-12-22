@@ -11,6 +11,33 @@ silicon computer is
 
     pip install mlx
 
+To install from PyPI you must meet the following requirements:
+
+- Using an M series chip (Apple silicon)
+- Using a native Python >= 3.8
+- macOS >= 13.3
+
+.. note::
+    MLX is only available on devices running macOS >= 13.3 
+    It is highly recommended to use macOS 14 (Sonoma)
+
+Troubleshooting
+^^^^^^^^^^^^^^^
+
+*My OS and Python versions are in the required range but pip still does not find
+a matching distribution.*
+
+Probably you are using a non-native Python. The output of
+
+.. code-block:: shell
+
+  python -c "import platform; print(platform.processor())"
+
+should be ``arm``. If it is ``i386`` (and you have M series machine) then you
+are using a non-native Python. Switch your Python to a native Python. A good
+way to do this is with `Conda <https://stackoverflow.com/q/65415996>`_.
+
+
 Build from source
 -----------------
 
@@ -19,6 +46,7 @@ Build Requirements
 
 - A C++ compiler with C++17 support (e.g. Clang >= 5.0)
 - `cmake <https://cmake.org/>`_ -- version 3.24 or later, and ``make``
+- Xcode >= 14.3 (Xcode >= 15.0 for macOS 14 and above)
 
 
 Python API
@@ -56,7 +84,15 @@ To make sure the install is working run the tests with:
 
 .. code-block:: shell
 
+  pip install ".[testing]"
   python -m unittest discover python/tests
+
+Optional: Install stubs to enable auto completions and type checking from your IDE:
+
+.. code-block:: shell
+
+  pip install ".[dev]"
+  python setup.py generate_stubs
 
 C++ API
 ^^^^^^^
@@ -111,3 +147,45 @@ should point to the path to the built metal library.
      - ON
    * - MLX_BUILD_PYTHON_BINDINGS
      - OFF
+
+
+.. note::
+
+    If you have multiple Xcode installations and wish to use 
+    a specific one while building, you can do so by adding the 
+    following environment variable before building 
+
+    .. code-block:: shell
+
+      export DEVELOPER_DIR="/path/to/Xcode.app/Contents/Developer/"
+
+    Further, you can use the following command to find out which 
+    macOS SDK will be used
+
+    .. code-block:: shell
+
+      xcrun -sdk macosx --show-sdk-version
+
+Troubleshooting
+^^^^^^^^^^^^^^^
+
+Metal not found
+~~~~~~~~~~~~~~~
+
+You see the following error when you try to build:
+
+.. code-block:: shell
+
+  error: unable to find utility "metal", not a developer tool or in PATH
+
+To fix this, first make sure you have Xcode installed:
+
+.. code-block:: shell
+
+  xcode-select --install
+
+Then set the active developer directory:
+
+.. code-block:: shell
+
+  sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
